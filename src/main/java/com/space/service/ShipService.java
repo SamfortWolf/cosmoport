@@ -5,14 +5,20 @@ import com.space.model.ShipType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.ResponseEntity;
+
 import java.util.List;
 
 public interface ShipService {
+    //main methods
     List<Ship> findAllShips (Specification spec);
     Page<Ship> findAllShips (Specification spec, Pageable pageable);
-    Ship getShipByID (Long id);
-    void deleteShipByID (Long id);
+    ResponseEntity findShipByID (Long id);
+    ResponseEntity deleteShipByID (Long id);
+    void updateShip (Long id, Ship ship);
+    ResponseEntity createNewShip (Ship newShip);
     Integer getShipsCount (Specification spec);
+    Boolean isExistingShip (Long id);
 
     Double ratingCalculator (Ship ship);
     //Specifications for dynamic filtration, see scripts.js

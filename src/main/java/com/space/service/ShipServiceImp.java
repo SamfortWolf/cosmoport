@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
@@ -34,15 +35,59 @@ public class ShipServiceImp implements ShipService {
         return  shipRepository.findAll(spec);
     }
 
-
     @Override
-    public Ship getShipByID(Long id) {
-        return shipRepository.findAll().get(id.intValue());
+    public ResponseEntity findShipByID(Long id) {
+        return ResponseEntity.of(shipRepository.findById(id));
+    }
+    public Boolean isExistingShip (Long id){
+        return shipRepository.existsById(id);
     }
 
     @Override
-    public void deleteShipByID(Long id) {
+    public ResponseEntity deleteShipByID(Long id) {
         shipRepository.deleteById(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @Override
+    public void updateShip(Long id, Ship ship) {
+
+    }
+
+    @Override
+    public ResponseEntity createNewShip(Ship newShip) {
+        Calendar before = Calendar.getInstance();
+        before.set(3019,0,1);
+        Calendar after = Calendar.getInstance();
+        after.set(2800,0,1);
+        if (newShip.getName()==null ||
+        newShip.getPlanet()==null ||
+        newShip.getSpeed() == null ||
+        newShip.getProdDate()==null ||
+        newShip.getCrewSize()==null ||
+        newShip.getShipType()==null) {
+            return ResponseEntity.badRequest().build();
+        }
+        else if (newShip.getName().length()>50 |
+        newShip.getPlanet().length()>50 |
+        newShip.getName().equals("") |
+        newShip.getPlanet().equals("") |
+        (Math.round(newShip.getSpeed()*100.)/100.)<0.01 |
+        (Math.round(newShip.getSpeed()*100.)/100.)>0.99 |
+        newShip.getCrewSize()<1 |
+        newShip.getCrewSize()>9999 |
+        newShip.getProdDate().getTime()<0 |
+        newShip.getProdDate().getTime()<(after.getTimeInMillis())|
+                newShip.getProdDate().getTime()>(before.getTimeInMillis())){
+            return ResponseEntity.badRequest().build();
+        }
+        else {
+            if (newShip.getUsed()==null)
+                newShip.setUsed(false);
+            Double rating = ratingCalculator(newShip);
+            newShip.setRating(rating);
+            return ResponseEntity.ok(shipRepository.save(newShip));
+        }
     }
 
     @Override
@@ -69,7 +114,6 @@ public class ShipServiceImp implements ShipService {
             }
         };
     }
-
     @Override
     public Specification<Ship> filterByPlanet(String planet) {
         return new Specification<Ship>() {
@@ -79,7 +123,6 @@ public class ShipServiceImp implements ShipService {
             }
         };
     }
-
     @Override
     public Specification<Ship> filterByType(ShipType shipType) {
         return new Specification<Ship>() {
@@ -89,7 +132,6 @@ public class ShipServiceImp implements ShipService {
             }
         };
     }
-
     @Override
     public Specification<Ship> filterByProdDate(Long prodYearAfter, Long prodDateBefore) {
         return new Specification<Ship>() {
@@ -112,7 +154,6 @@ public class ShipServiceImp implements ShipService {
             }
         };
     }
-
     @Override
     public Specification<Ship> filterByUsage(Boolean isUsed) {
         return new Specification<Ship>() {
@@ -130,7 +171,6 @@ public class ShipServiceImp implements ShipService {
             }
         };
     }
-
     @Override
     public Specification<Ship> filterBySpeed(Double speedMin, Double speedMax) {
         return new Specification<Ship>() {
@@ -149,7 +189,6 @@ public class ShipServiceImp implements ShipService {
             }
         };
     }
-
     @Override
     public Specification<Ship> filterByCrewSize(Integer crewSizeMin, Integer crewSizeMax) {
         return new Specification<Ship>() {
@@ -169,7 +208,6 @@ public class ShipServiceImp implements ShipService {
             }
         };
     }
-
     @Override
     public Specification<Ship> filterByRating(Double ratingMin, Double ratingMax) {
         return new Specification<Ship>() {

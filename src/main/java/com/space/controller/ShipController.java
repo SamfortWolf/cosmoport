@@ -10,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -78,4 +79,38 @@ public class ShipController {
                         .and(shipService.filterByRating(ratingMin,ratingMax))
                         .and(shipService.filterByType(shipType))));
     }
+
+    @RequestMapping(value = "/ships/{id}", method = RequestMethod.GET)
+    public ResponseEntity getShipByID (@PathVariable (value = "id") Long id){
+        if (id <=0 || id==null){
+            return ResponseEntity.badRequest().build();
+        }
+        else if (!shipService.isExistingShip(id)){
+            return ResponseEntity.notFound().build();
+        }
+        else {
+            return shipService.findShipByID(id);
+        }
+    }
+
+    @RequestMapping(value = "/ships/{id}", method = RequestMethod.DELETE)
+    public ResponseEntity deleteShipByID (@PathVariable (value = "id") Long id) {
+        if (id <=0 || id==null){
+            return ResponseEntity.badRequest().build();
+        }
+        else if (!shipService.isExistingShip(id)){
+            return ResponseEntity.notFound().build();
+        }
+        else {
+            return shipService.deleteShipByID(id);
+        }
+    }
+
+    @RequestMapping(value = "ships", method = RequestMethod.POST)
+    public ResponseEntity createNewShip (@RequestBody Ship newShip){
+        return shipService.createNewShip(newShip);
+    }
+
+
+
 }
