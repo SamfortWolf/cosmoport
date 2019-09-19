@@ -93,6 +93,11 @@ public class ShipController {
         }
     }
 
+    @RequestMapping(value = "/ships/{id}", method = RequestMethod.POST)
+    public ResponseEntity updateShip (@PathVariable (value = "id") Long id, @RequestBody Ship newShip){
+        return shipService.updateShip(id,newShip);
+    }
+
     @RequestMapping(value = "/ships/{id}", method = RequestMethod.DELETE)
     public ResponseEntity deleteShipByID (@PathVariable (value = "id") Long id) {
         if (id <=0 || id==null){

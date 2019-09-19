@@ -39,6 +39,7 @@ public class ShipServiceImp implements ShipService {
     public ResponseEntity findShipByID(Long id) {
         return ResponseEntity.of(shipRepository.findById(id));
     }
+
     public Boolean isExistingShip (Long id){
         return shipRepository.existsById(id);
     }
@@ -50,16 +51,52 @@ public class ShipServiceImp implements ShipService {
     }
 
     @Override
-    public void updateShip(Long id, Ship ship) {
+    public ResponseEntity updateShip(Long id, Ship ship) {
+        if (id <=0 || id==null){
+            return ResponseEntity.badRequest().build();
+        }
+        if (!shipRepository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+        Ship originalShip = shipRepository.findById(id).get();
+        if (ship.getName()!=null){
+            if (isValidName(ship))
+                originalShip.setName(ship.getName());
+            else return ResponseEntity.badRequest().build();
+        }
+        if (ship.getPlanet()!=null){
+            if (isValidPlanet(ship))
+                originalShip.setPlanet(ship.getPlanet());
+            else return ResponseEntity.badRequest().build();
+        }
+        if (ship.getSpeed()!=null){
+            if (isValidSpeed(ship))
+                originalShip.setSpeed(ship.getSpeed());
+            else return ResponseEntity.badRequest().build();
+        }
+        if (ship.getCrewSize()!=null){
+            if (isValidCrewSize(ship))
+                originalShip.setCrewSize(ship.getCrewSize());
+            else return ResponseEntity.badRequest().build();
+        }
+        if (ship.getProdDate()!=null){
+            if (isValidProdDate(ship))
+                originalShip.setProdDate(ship.getProdDate());
+            else return ResponseEntity.badRequest().build();
+        }
+        if (ship.getUsed()!=null)
+            originalShip.setUsed(ship.getUsed());
+        if (ship.getShipType()!=null)
+            originalShip.setShipType(ship.getShipType());
+
+        Double rating = ratingCalculator(originalShip);
+        originalShip.setRating(rating);
+        return ResponseEntity.ok(shipRepository.save(originalShip));
 
     }
 
     @Override
     public ResponseEntity createNewShip(Ship newShip) {
-        Calendar before = Calendar.getInstance();
-        before.set(3019,0,1);
-        Calendar after = Calendar.getInstance();
-        after.set(2800,0,1);
         if (newShip.getName()==null ||
         newShip.getPlanet()==null ||
         newShip.getSpeed() == null ||
@@ -68,17 +105,10 @@ public class ShipServiceImp implements ShipService {
         newShip.getShipType()==null) {
             return ResponseEntity.badRequest().build();
         }
-        else if (newShip.getName().length()>50 |
-        newShip.getPlanet().length()>50 |
-        newShip.getName().equals("") |
-        newShip.getPlanet().equals("") |
-        (Math.round(newShip.getSpeed()*100.)/100.)<0.01 |
-        (Math.round(newShip.getSpeed()*100.)/100.)>0.99 |
-        newShip.getCrewSize()<1 |
-        newShip.getCrewSize()>9999 |
-        newShip.getProdDate().getTime()<0 |
-        newShip.getProdDate().getTime()<(after.getTimeInMillis())|
-                newShip.getProdDate().getTime()>(before.getTimeInMillis())){
+        else if (
+        !isValidName(newShip) || !isValidPlanet(newShip) ||
+        !isValidSpeed(newShip) || !isValidCrewSize(newShip) ||
+        !isValidProdDate(newShip)){
             return ResponseEntity.badRequest().build();
         }
         else {
@@ -101,7 +131,8 @@ public class ShipServiceImp implements ShipService {
         prodCal.setTime(ship.getProdDate());
         int prodYear = prodCal.get(Calendar.YEAR);
         int currentYear = 3019;
-        return (80*ship.getSpeed()*(ship.getUsed()?0.5:1))/(currentYear-prodYear+1);
+        Double rating = (80*ship.getSpeed()*(ship.getUsed()?0.5:1))/(currentYear-prodYear+1);
+        return (Math.round(rating*100.)/100.);
     }
 
     //specs for filtering:
@@ -228,4 +259,37 @@ public class ShipServiceImp implements ShipService {
         };
     }
 
+    public Boolean isValidName (Ship ship){
+        if (ship.getName().equals("") || ship.getName().length()>50)
+            return false;
+        return true;
+    }
+    public Boolean isValidPlanet (Ship ship){
+        if (ship.getPlanet().equals("") || ship.getPlanet().length()>50)
+            return false;
+        return true;
+    }
+    public Boolean isValidSpeed (Ship ship){
+        if (((Math.round(ship.getSpeed()*100.)/100.)<0.01 ||
+                (Math.round(ship.getSpeed()*100.)/100.)>0.99))
+            return false;
+        return true;
+    }
+    public Boolean isValidCrewSize (Ship ship){
+        if (ship.getCrewSize()<1 ||
+                ship.getCrewSize()>9999)
+            return false;
+        return true;
+    }
+    public Boolean isValidProdDate (Ship ship){
+        Calendar before = Calendar.getInstance();
+        before.set(3019,0,1);
+        Calendar after = Calendar.getInstance();
+        after.set(2800,0,1);
+        if (ship.getProdDate().getTime()<0 ||
+                ship.getProdDate().getTime()<(after.getTimeInMillis()) ||
+                ship.getProdDate().getTime()>(before.getTimeInMillis()))
+            return false;
+        return true;
+    }
 }

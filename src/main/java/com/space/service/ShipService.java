@@ -15,7 +15,7 @@ public interface ShipService {
     Page<Ship> findAllShips (Specification spec, Pageable pageable);
     ResponseEntity findShipByID (Long id);
     ResponseEntity deleteShipByID (Long id);
-    void updateShip (Long id, Ship ship);
+    ResponseEntity updateShip (Long id, Ship ship);
     ResponseEntity createNewShip (Ship newShip);
     Integer getShipsCount (Specification spec);
     Boolean isExistingShip (Long id);
