@@ -1,10 +1,8 @@
 package com.space.service;
-
 import com.space.model.Ship;
 import com.space.model.ShipType;
 import com.space.repository.ShipRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +13,6 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.List;
 
 @Service
 public class ShipServiceImp implements ShipService {
@@ -25,33 +22,24 @@ public class ShipServiceImp implements ShipService {
         this.shipRepository = shipRepository;
     }
 
-    @Override
-    public Page<Ship> findAllShips(Specification spec, Pageable pageable) {
-        return shipRepository.findAll(spec, pageable);
+    @Override//READ
+    public ResponseEntity getAllShips(Specification spec, Pageable pageable) {
+        return ResponseEntity.ok(shipRepository.findAll(spec, pageable).getContent());
     }
 
-    @Override
-    public List<Ship> findAllShips(Specification spec) {
-        return  shipRepository.findAll(spec);
-    }
-
-    @Override
-    public ResponseEntity findShipByID(Long id) {
+    @Override//READ
+    public ResponseEntity getShipByID(Long id) {
         return ResponseEntity.of(shipRepository.findById(id));
     }
 
-    public Boolean isExistingShip (Long id){
-        return shipRepository.existsById(id);
-    }
-
-    @Override
+    @Override//DELETE
     public ResponseEntity deleteShipByID(Long id) {
         shipRepository.deleteById(id);
         return ResponseEntity.ok().build();
     }
 
-    @Override
-    public ResponseEntity updateShip(Long id, Ship ship) {
+    @Override//UPDATE
+    public ResponseEntity updateShipByID(Long id, Ship ship) {
         if (id <=0 || id==null){
             return ResponseEntity.badRequest().build();
         }
@@ -95,7 +83,7 @@ public class ShipServiceImp implements ShipService {
 
     }
 
-    @Override
+    @Override//CREATE
     public ResponseEntity createNewShip(Ship newShip) {
         if (newShip.getName()==null ||
         newShip.getPlanet()==null ||
@@ -121,11 +109,11 @@ public class ShipServiceImp implements ShipService {
     }
 
     @Override
-    public Integer getShipsCount(Specification spec) {
-        return shipRepository.findAll(spec).size();
+    public ResponseEntity getShipsCount(Specification spec) {
+        return ResponseEntity.ok(shipRepository.findAll(spec).size());
     }
 
-    @Override//calculate rating of new ship in create method of controller
+    @Override//calculating rating of new ship in create method of controller
     public Double ratingCalculator(Ship ship) {
         Calendar prodCal = Calendar.getInstance();
         prodCal.setTime(ship.getProdDate());
@@ -133,6 +121,50 @@ public class ShipServiceImp implements ShipService {
         int currentYear = 3019;
         Double rating = (80*ship.getSpeed()*(ship.getUsed()?0.5:1))/(currentYear-prodYear+1);
         return (Math.round(rating*100.)/100.);
+    }
+
+    //impl. of validation methods
+    @Override
+    public Boolean isExistingShip (Long id){
+        return shipRepository.existsById(id);
+    }
+    @Override
+    public Boolean isValidName (Ship ship){
+        if (ship.getName().equals("") || ship.getName().length()>50)
+            return false;
+        return true;
+    }
+    @Override
+    public Boolean isValidPlanet (Ship ship){
+        if (ship.getPlanet().equals("") || ship.getPlanet().length()>50)
+            return false;
+        return true;
+    }
+    @Override
+    public Boolean isValidSpeed (Ship ship){
+        if (((Math.round(ship.getSpeed()*100.)/100.)<0.01 ||
+                (Math.round(ship.getSpeed()*100.)/100.)>0.99))
+            return false;
+        return true;
+    }
+    @Override
+    public Boolean isValidCrewSize (Ship ship){
+        if (ship.getCrewSize()<1 ||
+                ship.getCrewSize()>9999)
+            return false;
+        return true;
+    }
+    @Override
+    public Boolean isValidProdDate (Ship ship){
+        Calendar before = Calendar.getInstance();
+        before.set(3019,0,1);
+        Calendar after = Calendar.getInstance();
+        after.set(2800,0,1);
+        if (ship.getProdDate().getTime()<0 ||
+                ship.getProdDate().getTime()<(after.getTimeInMillis()) ||
+                ship.getProdDate().getTime()>(before.getTimeInMillis()))
+            return false;
+        return true;
     }
 
     //specs for filtering:
@@ -257,39 +289,5 @@ public class ShipServiceImp implements ShipService {
                     return criteriaBuilder.between(root.get("rating"),ratingMin,ratingMax);
             }
         };
-    }
-
-    public Boolean isValidName (Ship ship){
-        if (ship.getName().equals("") || ship.getName().length()>50)
-            return false;
-        return true;
-    }
-    public Boolean isValidPlanet (Ship ship){
-        if (ship.getPlanet().equals("") || ship.getPlanet().length()>50)
-            return false;
-        return true;
-    }
-    public Boolean isValidSpeed (Ship ship){
-        if (((Math.round(ship.getSpeed()*100.)/100.)<0.01 ||
-                (Math.round(ship.getSpeed()*100.)/100.)>0.99))
-            return false;
-        return true;
-    }
-    public Boolean isValidCrewSize (Ship ship){
-        if (ship.getCrewSize()<1 ||
-                ship.getCrewSize()>9999)
-            return false;
-        return true;
-    }
-    public Boolean isValidProdDate (Ship ship){
-        Calendar before = Calendar.getInstance();
-        before.set(3019,0,1);
-        Calendar after = Calendar.getInstance();
-        after.set(2800,0,1);
-        if (ship.getProdDate().getTime()<0 ||
-                ship.getProdDate().getTime()<(after.getTimeInMillis()) ||
-                ship.getProdDate().getTime()>(before.getTimeInMillis()))
-            return false;
-        return true;
     }
 }

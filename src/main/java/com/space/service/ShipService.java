@@ -1,26 +1,28 @@
 package com.space.service;
-
 import com.space.model.Ship;
 import com.space.model.ShipType;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 
-import java.util.List;
-
 public interface ShipService {
     //main methods
-    List<Ship> findAllShips (Specification spec);
-    Page<Ship> findAllShips (Specification spec, Pageable pageable);
-    ResponseEntity findShipByID (Long id);
+    ResponseEntity getAllShips(Specification spec, Pageable pageable);
+    ResponseEntity getShipByID (Long id);
     ResponseEntity deleteShipByID (Long id);
-    ResponseEntity updateShip (Long id, Ship ship);
+    ResponseEntity updateShipByID (Long id, Ship ship);
     ResponseEntity createNewShip (Ship newShip);
-    Integer getShipsCount (Specification spec);
-    Boolean isExistingShip (Long id);
-
+    ResponseEntity getShipsCount (Specification spec);
     Double ratingCalculator (Ship ship);
+
+    //validation methods
+    Boolean isExistingShip (Long id);
+    Boolean isValidName (Ship ship);
+    Boolean isValidPlanet (Ship ship);
+    Boolean isValidSpeed (Ship ship);
+    Boolean isValidCrewSize (Ship ship);
+    Boolean isValidProdDate (Ship ship);
+
     //Specifications for dynamic filtration, see scripts.js
     Specification<Ship> filterByName(String name);
     Specification<Ship> filterByPlanet(String name);
